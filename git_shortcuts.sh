@@ -13,6 +13,7 @@ if ! which slackcli > /dev/null; then
   >&2 "Optionally install the slackcli from https://www.npmjs.com/package/slack-cli"
 fi
 
+# Function to create a pull request and ping a slack channel with the URL
 function cpr() {
   (
     set -e
@@ -43,6 +44,7 @@ function cpr() {
   )
 }
 
+# Creates a feature branch
 function feature() {
   (
     set -e
@@ -53,5 +55,8 @@ function feature() {
   )
 }
 
+# Updates a pull request
 alias upr='git push origin $(git rev-parse --abbrev-ref HEAD) -f'
+
+# Amends the current commit and updates the pull request.
 alias apr='git commit -a --amend --no-edit && upr'
