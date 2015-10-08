@@ -1,12 +1,16 @@
 # Slack Config
 export SLACK_TOKEN=$(>&2 echo "Get a slack token from https://api.slack.com/web and set it here.")
-export DEFAULT_SLACK_PR_ROOM="$(>&2 echo "Set $DEFAULT_SLACK_PR_ROOM to specify which room messages should go to by default.")
+export DEFAULT_SLACK_PR_ROOM=$(>&2 echo "Set $DEFAULT_SLACK_PR_ROOM to specify which room messages should go to by default.")
 
 # Github config
 
 if ! which hub > /dev/null; then
   >&2 "Download the github CLI from https://github.com/github/hub"
   exit 1
+fi
+
+if ! which slackcli > /dev/null; then
+  >&2 "Optionally install the slackcli from https://www.npmjs.com/package/slack-cli"
 fi
 
 function cpr() {
