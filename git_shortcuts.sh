@@ -13,11 +13,11 @@ if ! which slackcli > /dev/null; then
   >&2 "Optionally install the slackcli from https://www.npmjs.com/package/slack-cli"
 fi
 
+alias git=hub
 # Function to create a pull request and ping a slack channel with the URL
 function cpr() {
   (
     set -e
-    set -x
     while getopts “m:c:” OPTION; do
       case $OPTION in
         m)
@@ -28,17 +28,21 @@ function cpr() {
           ;;
       esac
     done
+    local commit_suffix=
     if [ -n "${message}" ]; then
-      if ! git diff --exit-code > /dev/null; then
-        git commit -a -m "${message}"
-      fi
+      commit_suffix="-m '${message}'"
+    else
+      commit_suffix="--amend --no-edit"
+    fi
+    if ! git diff --exit-code > /dev/null; then
+      sh -c "git commit -a $commit_suffix"
     fi
     local message="${message-$(git log -1 --pretty=%B)}"
     local group="${group-$DEFAULT_SLACK_PR_ROOM}"
     git push origin $(git rev-parse --abbrev-ref HEAD) -f
     local pr_url=$(git pull-request -m "$message")
     echo "Pull Requset URL: ${pr_url}"
-    if which slackcli &> /dev/null && [ -n "${SLACK_TOKEN}" ]; then
+    if [ -n "${pr_url}" ] && which slackcli &> /dev/null && [ -n "${SLACK_TOKEN}" ]; then
       slackcli -u "review_bot" -e ":robotface:" -g "${group}" -m "<!here|here> $USERNAME needs a code review - $pr_url ($message)"
     fi
   )
@@ -52,6 +56,17 @@ function feature() {
     git checkout master
     git pull --rebase origin master
     git checkout -b $feature_name
+  )
+}
+
+function rename-branch() {
+  (
+    local from=$1
+    local to=$2
+    git checkout $from
+    git pull --rebase origin master
+    git branch -m $to
+    git push origin :$from &> /dev/null
   )
 }
 
