@@ -43,7 +43,7 @@ function cpr() {
     local pr_url=$(git pull-request -m "$message")
     echo "Pull Requset URL: ${pr_url}"
     if [ -n "${pr_url}" ] && which slackcli &> /dev/null && [ -n "${SLACK_TOKEN}" ]; then
-      slackcli -u "review_bot" -e ":robotface:" -g "${group}" -m "<!here|here> $USERNAME needs a code review - $pr_url ($message)"
+      slackcli -u "review_bot" -e ":robotface:" -c "${group}" -m "<!here|here> $USERNAME needs a code review - $pr_url ($message)"
     fi
   )
 }
