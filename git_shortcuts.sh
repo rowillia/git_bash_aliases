@@ -18,12 +18,17 @@ alias git=hub
 function cpr() {
   (
     set -e
-    while getopts “m:c:” OPTION; do
+    while getopts "m:c:g:" OPTION; do
       case $OPTION in
         m)
           message="${OPTARG}"
           ;;
+        g)
+          group_flag="-g"
+          group="${OPTARG}"
+          ;;
         c)
+          group_flag="-h"
           group="${OPTARG}"
           ;;
       esac
@@ -39,23 +44,33 @@ function cpr() {
     fi
     local message="${message-$(git log -1 --pretty=%B)}"
     local group="${group-$DEFAULT_SLACK_PR_ROOM}"
-    git push origin $(git rev-parse --abbrev-ref HEAD) -f
-    local pr_url=$(git pull-request -m "$message")
+    git push origin "$(git rev-parse --abbrev-ref HEAD)" -f
+    local pr_url
+    pr_url="$(git pull-request -m "$message")"
     echo "Pull Requset URL: ${pr_url}"
-    if [ -n "${pr_url}" ] && which slackcli &> /dev/null && [ -n "${SLACK_TOKEN}" ]; then
-      slackcli -u "review_bot" -e ":robotface:" -c "${group}" -m "<!here|here> $USERNAME needs a code review - $pr_url ($message)"
+    if [ -n "${pr_url}" ] && \
+       which slackcli &> /dev/null && \
+       [ -n "${SLACK_TOKEN}" ]; then
+      slackcli -u "$USERNAME" \
+        -e ":robotface:" \
+        ${group_flag} "${group}" \
+        -m "<!here|here> $pr_url ($message)"
     fi
   )
 }
 
-# Creates a feature branch
 function feature() {
   (
     set -e
     local feature_name=$1
+    local stash_output
+    stash_output="$(git stash)"
     git checkout master
     git pull --rebase origin master
-    git checkout -b $feature_name
+    git checkout -b "$feature_name"
+    if [[ $stash_output != "No local changes to save" ]]; then
+      git stash apply
+    fi
   )
 }
 
@@ -63,10 +78,10 @@ function rename-branch() {
   (
     local from=$1
     local to=$2
-    git checkout $from
+    git checkout "$from"
     git pull --rebase origin master
-    git branch -m $to
-    git push origin :$from &> /dev/null
+    git branch -m "$to"
+    git push origin :"$from" &> /dev/null
   )
 }
 
