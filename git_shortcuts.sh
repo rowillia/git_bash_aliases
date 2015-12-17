@@ -90,3 +90,33 @@ alias upr='git push origin $(git rev-parse --abbrev-ref HEAD) -f'
 
 # Amends the current commit and updates the pull request.
 alias apr='git commit -a --amend --no-edit && upr'
+
+# Delete any branches that aren't tracked remotely.
+function clean-up-branches() {
+  set -e
+  local force_delete='false'
+  while getopts "f" OPTION; do
+    case $OPTION in
+      f)
+        force_delete='true'
+        ;;
+    esac
+  done
+  local remote_branches
+  remote_branches="$(git ls-remote &> /dev/null | \
+                     grep 'refs/heads' | \
+                     cut -d'/' -f3 | sort)"
+  local local_branches
+  local_branches="$(git branch | grep -v '\*' | sed 's/ //g' | sort)"
+  local branches_to_delete
+  branches_to_delete="$(comm -23 \
+                        <(echo "$local_branches") \
+                        <(echo "$remote_branches"))"
+  if $force_delete; then
+    echo "$branches_to_delete" | xargs git branch -D
+    git gc
+  else
+    echo "The following branches aren't tracked remotely and will be deleted:"
+    echo "$branches_to_delete"
+  fi
+}
