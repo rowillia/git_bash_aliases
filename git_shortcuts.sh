@@ -91,6 +91,10 @@ alias upr='git push origin $(git rev-parse --abbrev-ref HEAD) -f'
 # Amends the current commit and updates the pull request.
 alias apr='git commit -a --amend --no-edit && upr'
 
+# Pull & rebase
+alias pull='git pull --rebase origin master && git submodule update --init --recursive'
+
+
 # Delete any branches that aren't tracked remotely.
 function clean-up-branches() {
   set -e
@@ -120,3 +124,8 @@ function clean-up-branches() {
     echo "$branches_to_delete"
   fi
 }
+
+# Keybindings
+bindkey -e
+bindkey '[C' forward-word
+bindkey '[D' backward-word
